@@ -10,9 +10,7 @@ module.exports = {
     try {
       await admin.auth().getUserByEmail(user.email);
 
-      return res.status(400).json({
-        message: "User already exists",
-      });
+      res.status(400).json({ message: "Email is already registered." });
     } catch (error) {
       if (error.code === "auth/user-not-found") {
         try {
@@ -23,22 +21,25 @@ module.exports = {
             disabled: false,
           });
 
+          console.log(userResponse.uid);
+
           const newUser = new User({
+            username: req.body.username,
+            email: req.body.email,
             uid: userResponse.uid,
-            username: user.username,
-            email: user.email,
             password: CryptoJS.AES.encrypt(
-              user.password,
+              req.body.password,
               process.env.SECRET
             ).toString(),
           });
 
           await newUser.save();
+
           res.status(201).json({ status: true });
-        } catch (error) {
+        } catch (createUserError) {
           res
             .status(500)
-            .json({ error: "An error occured while creating account" });
+            .json({ error: "An error occurred while creating the user." });
         }
       }
     }
@@ -50,31 +51,22 @@ module.exports = {
         { email: req.body.email },
         { __v: 0, createdAt: 0, updatedAt: 0, skills: 0, email: 0 }
       );
+      !user && res.status(401).json("Wrong Login Details");
 
-      if (!user) {
-        return res.status(400).json({
-          message: "User not found",
-        });
-      }
-
-      const decyptedPassword = CryptoJS.AES.decrypt(
+      const decrytedpass = CryptoJS.AES.decrypt(
         user.password,
         process.env.SECRET
       );
-      const depassword = decyptedPassword.toString(CryptoJS.enc.Utf8);
+      const depassword = decrytedpass.toString(CryptoJS.enc.Utf8);
 
-      if (depassword !== req.body.password) {
-        return res.status(400).json({
-          message: "Invalid password",
-        });
-      }
+      depassword !== req.body.password &&
+        res.status(401).json("Wrong Login Details");
 
       const userToken = jwt.sign(
         {
           id: user._id,
           isAdmin: user.isAdmin,
           isAgent: user.isAgent,
-          uid: user.uid,
         },
         process.env.JWT_SEC,
         { expiresIn: "21d" }
@@ -84,7 +76,7 @@ module.exports = {
 
       res.status(200).json({ ...others, userToken });
     } catch (error) {
-      res.status(500).json({ error: "An error occured while logining" });
+      res.status(500);
     }
   },
 };

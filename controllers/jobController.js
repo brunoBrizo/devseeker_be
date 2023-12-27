@@ -9,7 +9,7 @@ module.exports = {
 
       res
         .status(201)
-        .json({ status: true, message: "Job created successfully." });
+        .json({ status: true, message: "Job successfully created" });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -17,10 +17,10 @@ module.exports = {
 
   updateJob: async (req, res) => {
     const jobId = req.params.id;
-    const updated = req.body;
+    const updates = req.body;
 
     try {
-      const updatedJob = await Job.findByIdAndUpdate(jobId, updated, {
+      const updatedJob = await Job.findByIdAndUpdate(jobId, updates, {
         new: true,
       });
 
@@ -32,20 +32,18 @@ module.exports = {
 
       res
         .status(200)
-        .json({ status: true, message: "Job updated successfully." });
+        .json({ status: true, message: "Job successfully updated" });
     } catch (error) {
       res.status(500).json(error);
     }
   },
 
   deleteJob: async (req, res) => {
-    const jobId = req.params.id;
-
     try {
-      await Job.findByIdAndDelete(jobId);
+      await Job.findByIdAndDelete(req.params.id);
       res
         .status(200)
-        .json({ status: true, message: "Job deleted successfully." });
+        .json({ status: true, message: "Job Successfully Deleted" });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -53,12 +51,8 @@ module.exports = {
 
   getJob: async (req, res) => {
     const jobId = req.params.id;
-
     try {
-      const job = await Job.findById(
-        { _id: jobId },
-        { createdAt: 0, updatedAt: 0, __V: 0 }
-      );
+      const job = await Job.findById({ _id: jobId }, { __v: 0, createdAt: 0 });
 
       res.status(200).json(job);
     } catch (error) {
@@ -70,15 +64,13 @@ module.exports = {
     const recent = req.query.new;
     try {
       let jobs;
-
       if (recent) {
-        jobs = await Job.find({}, { createdAt: 0, updatedAt: 0, __V: 0 })
+        jobs = await Job.find({}, { __v: 0, createdAt: 0, updatedAt: 0 })
           .sort({ createdAt: -1 })
           .limit(2);
       } else {
-        jobs = await Job.find({}, { createdAt: 0, updatedAt: 0, __V: 0 });
+        jobs = await Job.find({}, { __v: 0, createdAt: 0, updatedAt: 0 });
       }
-
       res.status(200).json(jobs);
     } catch (error) {
       res.status(500).json(error);
@@ -100,7 +92,21 @@ module.exports = {
           },
         },
       ]);
-      res.status(200).json(results);
+      res.status(200).send(results);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  },
+
+  getAgentJobs: async (req, res) => {
+    const uid = req.params.id;
+    try {
+      const jobs = await Job.find(
+        { agentId: uid },
+        { __v: 0, createdAt: 0, updateAt: 0 }
+      ).sort({ createdAt: -1 });
+
+      res.status(200).json(jobs);
     } catch (error) {
       res.status(500).json(error);
     }

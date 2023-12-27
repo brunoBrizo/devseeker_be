@@ -1,16 +1,13 @@
 const router = require("express").Router();
 const jobController = require("../controllers/jobController");
+const { verifyTokenAndAgent } = require("../middleware/verifyToken");
 
-router.post("/", jobController.createJob);
-
-router.get("/", jobController.getAllJobs);
-
-router.get("/search/:key", jobController.searchJobs);
-
+router.post("/", verifyTokenAndAgent, jobController.createJob);
+router.put("/:id", verifyTokenAndAgent, jobController.updateJob);
+router.delete("/:id", verifyTokenAndAgent, jobController.deleteJob);
 router.get("/:id", jobController.getJob);
-
-router.put("/:id", jobController.updateJob);
-
-router.delete("/:id", jobController.deleteJob);
+router.get("/", jobController.getAllJobs);
+router.get("/agent/:id", jobController.getAgentJobs);
+router.get("/search/:key", jobController.searchJobs);
 
 module.exports = router;
